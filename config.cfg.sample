@@ -1,0 +1,11 @@
+[drsa-twitter]
+consumer-key=
+consumer-secret=
+token-key=
+token-secret=
+languages = en ms
+#
+# 23424901 = Malaysia
+#
+woeid = 23424901
+keywords = 
