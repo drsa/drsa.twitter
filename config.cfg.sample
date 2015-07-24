@@ -1,11 +1,12 @@
 [drsa-twitter]
+
+# get your keys from https://apps.twitter.com/app
 consumer-key=
 consumer-secret=
 token-key=
 token-secret=
-languages = en ms
-#
+
+# Where On Earth ID
 # 23424901 = Malaysia
 #
 woeid = 23424901
-keywords = 

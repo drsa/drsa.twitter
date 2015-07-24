@@ -35,13 +35,15 @@ setup(name='drsa.twitter',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'tweepy'
+          'tweepy',
+          'argh',
+          'colored',
+          'python-dateutil',
           # -*- Extra requirements: -*-
       ],
       entry_points={
         'console_scripts': [
-            'listen-stream=drsa.twitter.stream:listen',
-            'search=drsa.twitter.search:search'
+            'drsa-twitter=drsa.twitter.command:main',
         ]
       }
       )

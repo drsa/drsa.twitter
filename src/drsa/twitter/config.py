@@ -1,9 +1,33 @@
 from ConfigParser import ConfigParser
 import os
 import tweepy
+import colored as clrd 
+
+def color(text, fg=None, bg=None, bold=False):
+    res = text
+    if fg:
+        res = "%s%s" % (clrd.fg(fg), res)
+    if bg:
+        res = "%s%s" % (clrd.bg(fg), res)
+    if bold:
+        res = "%s%s" % (clrd.attr('bold'), res)
+    if fg or bg or bold:
+        res = "%s%s" % (res, clrd.attr('reset'))
+    return res
 
 def get_config():
-    fname = os.environ.get('DRSA_TWITTER_CONFIG', 'config.cfg')
+    default_fname = os.environ.get('DRSA_TWITTER_CONFIG', 'config.cfg')
+
+    fname = None
+    config_paths = ['/etc/drsa-toolkit/twitter.cfg', default_fname]
+    for i in config_paths:
+        if os.path.exists(i):
+            fname = i
+
+    if fname is None:
+        raise RuntimeError(
+            "Unable to find config file in %s" % ', '.join(config_paths)
+        )
 
     cp = ConfigParser()
     cp.readfp(open(fname))
@@ -13,8 +37,7 @@ def get_config():
         'consumer-secret': cp.get('drsa-twitter', 'consumer-secret'),
         'access-token-key': cp.get('drsa-twitter', 'token-key'),
         'access-token-secret': cp.get('drsa-twitter', 'token-secret'),
-        'keyword-list': cp.get('drsa-twitter', 'keywords').split() + ['%23'],
-        'languages': cp.get('drsa-twitter', 'languages').split()
+        'woeid': cp.get('drsa-twitter', 'woeid')
     }
 
     return result
