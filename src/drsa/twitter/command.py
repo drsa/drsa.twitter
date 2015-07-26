@@ -8,12 +8,14 @@ from . import stream as tstream
     help="Twitter query as defined at"
          " https://dev.twitter.com/rest/public/search")
 def search(output, query):
-    tsearch.search(query, output)
+    q = ' '.join(query)
+    tsearch.search(q, output)
 
 @argh.arg('output', help="Output file (JSONLines)")
 @argh.arg('keywords', nargs="+", help="keywords to listen for")
 def stream(output, keywords):
-    tstream.listen(keywords, output)
+    kw = [i.strip() for i in ' '.join(keywords).split(',')]
+    tstream.listen(kw, output)
 
 parser = argh.ArghParser()
 parser.add_commands([

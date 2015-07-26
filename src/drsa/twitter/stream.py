@@ -6,11 +6,14 @@ from tweepy.streaming import StreamListener
 import os
 from ConfigParser import ConfigParser
 import logging
-from .config import get_config, get_auth, color
+from .config import get_config, get_auth, color, save_or_discard
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('Stream Listener')
 import json
 import traceback
+
+class FirehoseLimitExceeded(Exception):
+    pass
 
 #Listener Class Override
 class Listener(StreamListener):
@@ -24,36 +27,17 @@ class Listener(StreamListener):
         while True:
 
             try:
-
-                with open(self.output_file, 'a') as saveFile:
-                    # ignore anything posted outside of KL timezone
-                    data = data.strip()
-                    d = json.loads(data)
-                    if not d.get('user', None):
-                        if d['limit']['track']:
-                            raise Exception('Exceeded firehose limit')
-                    timezone = d['user']['time_zone'] or ''
-                    if timezone.upper() == 'KUALA LUMPUR':
-                        saveFile.write(data + '\n')
-                        logger.info('%s[%s]: @%s (%s) %s' % (
-                            color('STORED', 'green', bold=True),
-                            color(timezone.upper(), 'yellow'),
-                            color(d['user']['screen_name'], bold=True), 
-                            d['user']['name'], 
-                            d['text'])
-                        )
-                    else:
-                        logger.info('%s[%s]: @%s (%s) %s' % (
-                            color('DISCARD', 'red', bold=True),
-                            color(timezone.upper(), 'yellow'),
-                            color(d['user']['screen_name'], bold=True),
-                            d['user']['name'],
-                            d['text'])
-                        )
-
+                data = data.strip()
+                d = json.loads(data)
+                if not d.get('user', None):
+                    if d['limit']['track']:
+                        raise FirehoseLimitExceeded()
+                save_or_discard(d, self.output_file)
                 return True
 
             except BaseException, e:
+                if isinstance(e, FirehoseLimitExceeded):
+                    raise e
                 traceback.print_exc()
                 logger.error('Failed on_data, ' + data)
                 time.sleep(5)
@@ -76,4 +60,10 @@ def listen(keywords, output):
     ))
     twitterStream = Stream(auth, Listener(api, output)) #initialize Stream object with a time out limit
     twitterStream.api = api
-    twitterStream.filter(track=keywords)  #call the filter method to run the Stream Object
+    while True:
+        try:
+            twitterStream.filter(track=keywords)  #call the filter method to run the Stream Object
+        except FirehoseLimitExceeded, e:
+            traceback.print_exc()
+            logger.info("Firehose Limit Exceeded. Attempting to rebind")
+            time.sleep(5)

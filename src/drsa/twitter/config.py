@@ -2,6 +2,10 @@ from ConfigParser import ConfigParser
 import os
 import tweepy
 import colored as clrd 
+import json
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('drsa-twitter')
 
 def color(text, fg=None, bg=None, bold=False):
     res = text
@@ -65,3 +69,28 @@ def get_api():
             wait_on_rate_limit=True,
             wait_on_rate_limit_notify=True
     )
+
+
+def save_or_discard(data, f):
+    d = data
+    with open(f, 'a') as output:
+        timezone = d['user']['time_zone'] or ''
+        if timezone.upper() in ['KUALA LUMPUR', '']:
+            output.write(json.dumps(data) + '\n')
+            logger.info('%s[%s %s]: @%s (%s) %s' % (
+                color('STORED', 'green', bold=True),
+                color(data['created_at'], 'blue'),
+                color(timezone.upper(), 'yellow'),
+                color(d['user']['screen_name'], bold=True),
+                d['user']['name'],
+                d['text'])
+            )
+        else:
+            logger.info('%s[%s %s]: @%s (%s) %s' % (
+                color('DISCARD', 'red', bold=True),
+                color(data['created_at'], 'blue'),
+                color(timezone.upper(), 'yellow'),
+                color(d['user']['screen_name'], bold=True),
+                d['user']['name'],
+                d['text'])
+            )
